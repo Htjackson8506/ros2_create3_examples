@@ -104,6 +104,15 @@ BUMP_HEADINGS = {
     'bump_right': math.pi / 2
 }
 
+IR_HEADINGS = {
+    'ir_intensity_side_left': -math.pi / 3,
+    'ir_intensity_left': -math.pi / 4,
+    'ir_intensity_front_left': -math.pi / 6, 
+    'ir_intensity_front_center_left': math.pi,
+    'ir_intensity_front_center_right': math.pi,
+    'ir_intensity_front_right': math.pi / 6,
+    'ir_intensity_right': math.pi / 3
+}
 
 HAZARD_HEADINGS = {
     'left': -math.pi / 2,

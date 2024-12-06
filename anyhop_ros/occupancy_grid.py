@@ -39,6 +39,21 @@ class PathwayGrid:
         self.visited.add((x, y))
         self.pathway.append((x, y))
 
+    def ir_check(self, x_meters: float, y_meters: float, orientation: float, ir_value: str):
+        orientation = runner.normalize_angle(orientation + runner.IR_HEADINGS[ir_value])
+
+        if -math.pi / 4 < orientation <= math.pi / 4:
+            x_meters += self.meters_per_square
+        elif math.pi / 4 < orientation <= 3 * math.pi / 4:
+            y_meters += self.meters_per_square
+        elif 3 * math.pi / 4 < orientation:
+            x_meters -= self.meters_per_square
+        else:
+            y_meters -= self.meters_per_square
+        x, y = self.to_squares(x_meters, y_meters)
+        self.update_min_max(x, y)
+        self.blocked.add((x, y))
+
     def bump(self, x_meters: float, y_meters: float, orientation: float, bump: str):
         orientation = runner.normalize_angle(orientation + runner.BUMP_HEADINGS[bump])
 

@@ -2,6 +2,7 @@ import math
 import sys, queue, threading, curses, pickle, datetime
 import runner
 from nav_msgs.msg import Odometry
+from irobot_create_msgs.msg import IrIntensityVector
 
 from occupancy_grid import PathwayGrid
 
@@ -12,6 +13,8 @@ class MapperNode(runner.HdxNode):
         self.map_str_queue = map_str_queue
         self.subscribe_hazard(self.bump_callback)
         self.subscribe_odom(self.odom_callback)
+        self.subscribe_ir(self.ir_callback)
+        self.avoid_direction = None
         self.map = PathwayGrid(0.1)
         self.goal = (-1, 0)
         self.last_pose = None
@@ -46,6 +49,33 @@ class MapperNode(runner.HdxNode):
             self.assign_goal(x + math.cos(self.move_start_heading), y + math.sin(self.move_start_heading))
 
         self.map_str_queue.put((self.goal, self.last_pose, self.map))
+
+    def ir_callback(self, msg: IrIntensityVector):
+        self.record_first_callback()
+        self.ir_too_close = 400
+        ir_values = [reading.value for reading in msg.readings]
+        ir_frame_ids = [reading.header.frame_id for reading in msg.readings]
+        max_ir = max(ir_values[1:-1]) if self.ir_clear() else max(ir_values)
+        if max_ir > self.ir_too_close: # Continue if clear
+        #    if self.ir_clear():
+        #      mid = len(ir_values) // 2
+        #     self.avoid_direction = math.pi / 4
+        #    if sum(ir_values[:mid]) > sum(ir_values[-mid:]):
+        #       self.avoid_direction *= -1.0
+             #self.publish_twist(runner.turn_twist(self.avoid_direction))
+        #else:
+            self.avoid_direction = None
+            x, y = self.last_x_y()
+            self.map.ir_check(x, y, self.last_heading(), ir_frame_ids[ir_values.index(max_ir)])
+            #print(f'\n {ir_frame_ids[ir_values.index(max_ir)]} \n {max_ir}')
+            new_direction = runner.normalize_angle(runner.discretish_norm(self.last_heading() + math.pi, math.pi, 2))
+            self.assign_goal(x + math.cos(new_direction), y + math.sin(new_direction))
+
+    def ir_clear(self):
+        return self.avoid_direction == None
+    
+    def is_turning(self):
+        return not self.ir_clear()
 
     def bump_callback(self, msg):
         self.record_first_callback()
@@ -121,8 +151,6 @@ def run_runner(stdscr):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print("Usage: bump_turn_mapper robot_name")
+        print("Usage: ir_mapper robot_name")
     else:
         curses.wrapper(run_runner)
-
- 
